@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Image, Text, Linking, AsyncStorage } from 'react-native';
 import styles from './styles';
 import { RectButton } from 'react-native-gesture-handler';
@@ -8,6 +8,7 @@ import unfavoriteOutline from '../../assets/images/icons/unfavorite.png';
 import whatsapp from '../../assets/images/icons/whatsapp.png';
 import { Teacher } from '../../pages/TeacherList';
 import api from '../../services/api';
+import FavoritesContext from '../../Contexts/FavoritesContext';
 
 interface teacherItemProps {
     teacher: Teacher,
@@ -16,27 +17,17 @@ interface teacherItemProps {
 
 const TeacherItem: React.FC<teacherItemProps> = ({ teacher, favorited }) => {
 
+    const { favorites, removeFunction, addFunction } = useContext(FavoritesContext);
     const [isFavorited, setFavorited] = useState<boolean>(favorited);
+
 
     async function toggleFavorite() {
         setFavorited(!isFavorited);
-
-        const res = await AsyncStorage.getItem('favorites');
-        let favorites = [];
-        if(res) {
-            favorites = JSON.parse(res);
-        }
-
-        if(!isFavorited) {
-            favorites.push(teacher.id);
+        if(!favorites.includes(teacher._id)) {
+            addFunction(teacher._id);
         } else {
-            const teacherIndex = favorites.findIndex((teacherItem: Teacher) => {
-                return teacherItem.id === teacher.id;
-            });
-            favorites.splice(teacherIndex, 1);
-            
+            removeFunction(teacher._id);
         }
-        await AsyncStorage.setItem('favorites', JSON.stringify(favorites));
     }
 
     return (
@@ -63,15 +54,15 @@ const TeacherItem: React.FC<teacherItemProps> = ({ teacher, favorited }) => {
                 <View style={styles.buttonsContainer}>
                     <RectButton
                     onPress={toggleFavorite}
-                    style={[styles.favoriteButton, isFavorited && styles.favorited]}
+                    style={[styles.favoriteButton, favorites.includes(teacher._id) && styles.favorited]}
                     >
-                        {isFavorited ? <Image source={unfavoriteOutline} /> : <Image source={heartOutline} />}
+                        {favorites.includes(teacher._id) ? <Image source={unfavoriteOutline} /> : <Image source={heartOutline} />}
                     </RectButton>
 
                     <RectButton onPress={() => {
                         Linking.openURL(`whatsapp://send?phone=${teacher.whatsapp}`);
                         api.post('connections', {
-                            user_id: teacher.id
+                            user_id: teacher._id
                         })
                         }} style={styles.contactButton}>
                         <Image source={whatsapp}/>

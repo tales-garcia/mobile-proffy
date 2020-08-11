@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, ScrollView, AsyncStorage } from 'react-native';
 import styles from './styles';
 import PageHeader from '../../components/PageHeader';
@@ -6,26 +6,24 @@ import TeacherItem from '../../components/TeacherItem';
 import api from '../../services/api';
 import { Teacher } from '../TeacherList';
 import { useFocusEffect } from '@react-navigation/native';
+import FavoritesContext from '../../Contexts/FavoritesContext';
 
 const Favorites: React.FC = () => {
-
     const [classes, setClasses] = useState([]);
-    const [favorites, setFavorites] = useState<number[]>([]);
+    const {favorites} = useContext(FavoritesContext);
 
     useFocusEffect(
         React.useCallback(() => {
-            loadFavorites();
+            loadClasses();
         }, [])
     );
-
-    function loadFavorites() {
-        AsyncStorage.getItem('favorites').then(res => {
-            if(res) {
-                setFavorites(JSON.parse(res));
+    function loadClasses() {
+        api.get('classes/data', {
+            headers: {
+                authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMzEzNDc2M2JkYTZmZTJiNTMzNWVkZCIsImlhdCI6MTU5NzEwMDU3NCwiZXhwIjoxNTk3MTg2OTc0fQ.6k6Hc2J__Cu0ny9gkJwxr-EEElFbQI_cdnIqXYWvZcY'
             }
-        });
-        api.get('classes').then(res => {
-            setClasses(res.data);
+        }).then(res => {
+            setClasses(res.data.classesData);
         });
     }
 
@@ -41,8 +39,8 @@ const Favorites: React.FC = () => {
                 }}
             >
                 {classes.map((classItem: Teacher) => {
-                    if(favorites.includes(classItem.id))
-                        return <TeacherItem favorited={true} key={classItem.id} teacher={classItem} />;
+                    if(favorites.includes(classItem._id))
+                        return <TeacherItem favorited={true} key={classItem._id} teacher={classItem} />;
                 })}
             </ScrollView>
         </View>

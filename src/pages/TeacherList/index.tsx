@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, ScrollView, Text, Image, TextInput, AsyncStorage } from 'react-native';
 import styles from './styles';
 import PageHeader from '../../components/PageHeader';
@@ -7,9 +7,10 @@ import Dropdown from '../../components/Dropdown';
 import filter from '../../assets/images/icons/filtro.png';
 import api from '../../services/api';
 import { useFocusEffect } from '@react-navigation/native';
+import FavoritesContext from '../../Contexts/FavoritesContext';
 
 export interface Teacher {
-    id: number,
+    _id: string,
     name: string,
     avatar: string,
     subject: string,
@@ -19,14 +20,14 @@ export interface Teacher {
 }
 
 const TeacherList: React.FC = () => {
-
     const [week_day, setWeek_day] = useState('');
     //const [week_dayLabel, setWeek_dayLabel] = useState('Selecione');
     const [subject, setSubject] = useState('');
     const [time, setTime] = useState('');
 
     const [classes, setClasses] = useState([]);
-    const [favorites, setFavorites] = useState<number[]>([]);
+    //const [favorites, setFavorites] = useState<string[]>([]);
+    const {favorites} = useContext(FavoritesContext);
 
     useEffect(() => UpdateFilters(), [subject, week_day, time]);
 
@@ -37,14 +38,18 @@ const TeacherList: React.FC = () => {
     );
 
     function loadFavorites() {
-        AsyncStorage.getItem('favorites').then(res => {
-            if(res) {
-                setFavorites(JSON.parse(res));
+        // AsyncStorage.getItem('favorites').then(res => {
+        //     if(res) {
+        //         setFavorites(JSON.parse(res));
+        //     }
+        // }).catch(console.log);
+        api.get('classes/data', {
+            headers: {
+                authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMzEzNDc2M2JkYTZmZTJiNTMzNWVkZCIsImlhdCI6MTU5NzEwMDU3NCwiZXhwIjoxNTk3MTg2OTc0fQ.6k6Hc2J__Cu0ny9gkJwxr-EEElFbQI_cdnIqXYWvZcY'
             }
-        });
-        api.get('classes').then(res => {
-            setClasses(res.data);
-        });
+        }).then(res => {
+            setClasses(res.data.classesData);
+        }).catch(console.log);
     }
 
     const UpdateFilters = () => {
@@ -54,9 +59,14 @@ const TeacherList: React.FC = () => {
             subject: subject
         }
 
-        api.get('classes', {params}).then(res => {
-            setClasses(res.data);
-        });
+        api.get('classes/data', {
+            params,
+            headers: {
+                authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmMzEzNDc2M2JkYTZmZTJiNTMzNWVkZCIsImlhdCI6MTU5NzEwMDU3NCwiZXhwIjoxNTk3MTg2OTc0fQ.6k6Hc2J__Cu0ny9gkJwxr-EEElFbQI_cdnIqXYWvZcY'
+            }
+        }).then(res => {
+            setClasses(res.data.classesData);
+        }).catch(console.log);
     }
 
     return (
@@ -145,8 +155,7 @@ const TeacherList: React.FC = () => {
                 }}
             >
                 {classes.map((classItem: Teacher) => {
-                    console.log(favorites.includes(classItem.id))
-                    return <TeacherItem favorited={favorites.includes(classItem.id)} key={classItem.id} teacher={classItem} />;
+                    return <TeacherItem favorited={favorites.includes(classItem._id)} key={classItem._id} teacher={classItem} />;
                 })}
             </ScrollView>
         </View>

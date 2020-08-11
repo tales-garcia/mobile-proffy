@@ -4,6 +4,7 @@ import { AppLoading } from 'expo';
 import { Archivo_400Regular, Archivo_700Bold, useFonts } from '@expo-google-fonts/archivo';
 import { Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
 import AppStack from './src/routes/AppStack';
+import { FavoritesProvider } from './src/Contexts/FavoritesContext';
 
 export default function App() {
 
@@ -18,7 +19,9 @@ export default function App() {
   } else {
     return (
       <>
-          <AppStack/>
+          <FavoritesProvider>
+            <AppStack/>
+          </FavoritesProvider>
           <StatusBar style="light" />
       </>
     );  
